@@ -48,19 +48,25 @@ export function AdminLobbyScreen({
   const [showExclusionsModal, setShowExclusionsModal] = useState(false);
   const [showDrawConfirm, setShowDrawConfirm] = useState(false);
   const [newName, setNewName] = useState('');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const canDraw = group.status === 'open' && participants.length >= 3;
 
   const handleShare = (p: Participant) => {
     const link = onGenerateLink(group.id, p.id);
-    navigator.clipboard.writeText(link);
-    setCopiedId(p.id);
-    setTimeout(() => setCopiedId(null), 2000);
+
+    // Mensagem personalizada para WhatsApp
+    const message = `🎁😅 ${p.name}, não adianta fugir: você vai ter que comprar o presente. Então descobre logo quem você tirou no Amigo Secreto 😂👉 ${link}`;
+
+    // URL encode da mensagem para WhatsApp
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+    // Abre WhatsApp em nova aba
+    window.open(whatsappUrl, '_blank');
+
     toast({
-      title: "Link Copiado!",
-      description: `Envie para ${p.name}.`
+      title: "Compartilhar no WhatsApp",
+      description: `Enviando link para ${p.name}.`
     });
   };
 
@@ -75,7 +81,7 @@ export function AdminLobbyScreen({
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-4xl px-4 py-8 mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -83,7 +89,7 @@ export function AdminLobbyScreen({
               <Badge variant="outline" className="bg-primary/10 text-primary">
                 ADMIN
               </Badge>
-              <span className="text-xs text-muted-foreground font-mono">
+              <span className="font-mono text-xs text-muted-foreground">
                 ID: {group.id}
               </span>
             </div>
@@ -101,9 +107,9 @@ export function AdminLobbyScreen({
 
         {/* Quick Actions */}
         {group.status === 'open' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Card
-              className="cursor-pointer hover:bg-accent/50 transition-colors"
+              className="transition-colors cursor-pointer hover:bg-accent/50"
               onClick={() => setShowExclusionsModal(true)}
             >
               <CardContent className="flex items-center justify-between p-6">
@@ -123,7 +129,7 @@ export function AdminLobbyScreen({
             </Card>
 
             <Card
-              className="cursor-pointer hover:bg-accent/50 transition-colors"
+              className="transition-colors cursor-pointer hover:bg-accent/50"
               onClick={() => setShowAddModal(true)}
             >
               <CardContent className="flex items-center justify-between p-6">
@@ -163,10 +169,10 @@ export function AdminLobbyScreen({
                 participants.map((p) => (
                   <div
                     key={p.id}
-                    className="flex items-center justify-between px-6 py-4 hover:bg-accent/50 transition-colors"
+                    className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-accent/50"
                   >
                     <div className="flex items-center gap-4">
-                      <Avatar className="h-10 w-10">
+                      <Avatar className="w-10 h-10">
                         <AvatarFallback className={
                           p.claimedBy
                             ? "bg-primary text-primary-foreground"
@@ -181,7 +187,7 @@ export function AdminLobbyScreen({
                       </Avatar>
                       <div>
                         <p className="font-medium">{p.name}</p>
-                        <p className="text-xs text-muted-foreground uppercase">
+                        <p className="text-xs uppercase text-muted-foreground">
                           {p.claimedBy ? 'Confirmado' : 'Pendente'}
                         </p>
                       </div>
@@ -190,18 +196,9 @@ export function AdminLobbyScreen({
                       <Button
                         variant="outline"
                         size="icon"
-                        className={
-                          copiedId === p.id
-                            ? "bg-primary text-primary-foreground"
-                            : ""
-                        }
                         onClick={() => handleShare(p)}
                       >
-                        {copiedId === p.id ? (
-                          <Check className="w-4 h-4" />
-                        ) : (
-                          <Share2 className="w-4 h-4" />
-                        )}
+                        <Share2 className="w-4 h-4" />
                       </Button>
                       {group.status === 'open' && (
                         <Button
@@ -237,7 +234,7 @@ export function AdminLobbyScreen({
                   : 'Realizar Sorteio'}
               </Button>
               {!canDraw && participants.length < 3 && (
-                <p className="text-xs text-muted-foreground text-center mt-2">
+                <p className="mt-2 text-xs text-center text-muted-foreground">
                   Adicione pelo menos 3 participantes
                 </p>
               )}
@@ -255,7 +252,7 @@ export function AdminLobbyScreen({
               Adicione uma pessoa ao grupo
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="py-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="participantName">Nome</Label>
               <Input
@@ -296,7 +293,7 @@ export function AdminLobbyScreen({
               Essa ação é irreversível e o resultado será revelado para todos os participantes.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"
               onClick={() => setShowDrawConfirm(false)}
